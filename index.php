@@ -523,7 +523,7 @@ $females = $total - $males;
 
 </div>
 
-<!-- Delete confirmation modal -->
+
 <div class="overlay" id="overlay">
   <div class="modal">
     <div class="modal-icon">
