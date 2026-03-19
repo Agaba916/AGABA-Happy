@@ -28,6 +28,7 @@ if (isset($_POST['submit'])) {
                 $_SESSION['user_id']   = $user['id'];
                 $_SESSION['user_name'] = $user['firstname'] . ' ' . $user['lastname'];
                 $_SESSION['user_email']= $user['email'];
+                $_SESSION['user_role'] = $user['role'];
 
                 header("Location: index.php?success=welcome");
                 exit;
@@ -102,7 +103,7 @@ $conn->close();
       z-index: 1;
     }
 
-    /* Logo */
+    /* Brand */
     .brand {
       display: flex;
       align-items: center;
@@ -140,7 +141,7 @@ $conn->close();
     }
     .card-head p { color: var(--sub); font-size: .875rem; }
 
-    /* Error */
+    /* Error alert */
     .alert-error {
       display: flex;
       align-items: center;
@@ -209,7 +210,7 @@ $conn->close();
     }
     .toggle-pw:hover { color: var(--sub); }
 
-    /* Submit */
+    /* Submit button */
     .btn-login {
       width: 100%;
       padding: .85rem;
@@ -228,6 +229,7 @@ $conn->close();
     .btn-login:hover  { background: var(--accentH); }
     .btn-login:active { transform: scale(.98); }
 
+    /* Divider */
     .divider {
       text-align: center;
       color: var(--dim);
@@ -313,7 +315,7 @@ $conn->close();
             <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
           </svg>
           <input type="password" name="password" id="pw" placeholder="••••••••" required>
-          <button type="button" class="toggle-pw" onclick="togglePw()" id="toggleBtn">
+          <button type="button" class="toggle-pw" onclick="togglePw()">
             <svg id="eye-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
               <circle cx="12" cy="12" r="3"/>
