@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-// If already logged in, go straight to dashboard
+// Already logged in? Go to dashboard
 if (isset($_SESSION['user_id'])) {
     header("Location: index.php");
     exit;
@@ -9,14 +9,22 @@ if (isset($_SESSION['user_id'])) {
 
 include 'connect.php';
 
-$error = '';
+$error   = '';
+$success = '';
+
+// Success toast after registration
+if (isset($_GET['success']) && $_GET['success'] === 'registered') {
+    $success = "Account created! You can now sign in.";
+}
 
 if (isset($_POST['submit'])) {
-    $email    = $conn->real_escape_string(trim($_POST['email']));
-    $password = $_POST['password'];
+    $email    = $conn->real_escape_string(trim($_POST['email'] ?? ''));
+    $password = $_POST['password'] ?? '';
 
     if (empty($email) || empty($password)) {
         $error = "Please fill in all fields.";
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $error = "Invalid email format.";
     } else {
         $result = $conn->query("SELECT * FROM employees WHERE email='$email' LIMIT 1");
 
@@ -24,12 +32,12 @@ if (isset($_POST['submit'])) {
             $user = $result->fetch_assoc();
 
             if (password_verify($password, $user['password'])) {
-                // Password correct — create session
                 $_SESSION['user_id']   = $user['id'];
                 $_SESSION['user_name'] = $user['firstname'] . ' ' . $user['lastname'];
                 $_SESSION['user_email']= $user['email'];
                 $_SESSION['user_role'] = $user['role'];
 
+                $conn->close();
                 header("Location: index.php?success=welcome");
                 exit;
             } else {
@@ -103,7 +111,6 @@ $conn->close();
       z-index: 1;
     }
 
-    /* Brand */
     .brand {
       display: flex;
       align-items: center;
@@ -117,14 +124,9 @@ $conn->close();
       border-radius: 10px;
       display: flex; align-items: center; justify-content: center;
     }
-    .brand-name {
-      font-family: 'Syne', sans-serif;
-      font-weight: 700;
-      font-size: 1.15rem;
-    }
+    .brand-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.15rem; }
     .brand-name span { color: var(--accent); }
 
-    /* Card */
     .card {
       background: var(--card);
       border: 1px solid var(--border);
@@ -133,13 +135,27 @@ $conn->close();
     }
 
     .card-head { margin-bottom: 1.8rem; }
-    .card-head h1 {
-      font-family: 'Syne', sans-serif;
-      font-size: 1.7rem;
-      font-weight: 700;
-      margin-bottom: .3rem;
+    .card-head h1 { font-family: 'Syne', sans-serif; font-size: 1.7rem; font-weight: 700; margin-bottom: .3rem; }
+    .card-head p  { color: var(--sub); font-size: .875rem; }
+
+    /* Success toast */
+    .alert-success {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      background: rgba(0,212,170,.1);
+      border: 1px solid rgba(0,212,170,.25);
+      color: var(--teal);
+      padding: .75rem 1rem;
+      border-radius: 8px;
+      margin-bottom: 1.4rem;
+      font-size: .875rem;
+      animation: slideIn .35s ease;
     }
-    .card-head p { color: var(--sub); font-size: .875rem; }
+    @keyframes slideIn {
+      from { opacity:0; transform: translateY(-6px); }
+      to   { opacity:1; transform: none; }
+    }
 
     /* Error alert */
     .alert-error {
@@ -161,7 +177,6 @@ $conn->close();
       75%      { transform: translateX(6px); }
     }
 
-    /* Fields */
     .field { margin-bottom: 1.2rem; }
     .field label {
       display: block;
@@ -172,14 +187,16 @@ $conn->close();
       color: var(--dim);
       margin-bottom: .5rem;
     }
+
     .input-wrap { position: relative; }
-    .input-wrap svg {
+    .input-wrap svg.icon {
       position: absolute;
       left: .9rem; top: 50%;
       transform: translateY(-50%);
       color: var(--dim);
       pointer-events: none;
     }
+
     .field input {
       width: 100%;
       background: var(--bg);
@@ -193,12 +210,8 @@ $conn->close();
       transition: border-color .2s, box-shadow .2s;
     }
     .field input::placeholder { color: var(--dim); }
-    .field input:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(108,99,255,.12);
-    }
+    .field input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(108,99,255,.12); }
 
-    /* Show/hide password toggle */
     .toggle-pw {
       position: absolute;
       right: .9rem; top: 50%;
@@ -210,7 +223,6 @@ $conn->close();
     }
     .toggle-pw:hover { color: var(--sub); }
 
-    /* Submit button */
     .btn-login {
       width: 100%;
       padding: .85rem;
@@ -224,12 +236,10 @@ $conn->close();
       cursor: pointer;
       margin-top: .4rem;
       transition: background .2s, transform .1s;
-      letter-spacing: .01em;
     }
     .btn-login:hover  { background: var(--accentH); }
     .btn-login:active { transform: scale(.98); }
 
-    /* Divider */
     .divider {
       text-align: center;
       color: var(--dim);
@@ -247,18 +257,14 @@ $conn->close();
     .divider::before { left: 0; }
     .divider::after  { right: 0; }
 
-    .signup-link {
+    .register-link {
       display: block;
       text-align: center;
       font-size: .875rem;
       color: var(--sub);
     }
-    .signup-link a {
-      color: var(--accent);
-      text-decoration: none;
-      font-weight: 500;
-    }
-    .signup-link a:hover { color: var(--accentH); }
+    .register-link a { color: var(--accent); text-decoration: none; font-weight: 500; }
+    .register-link a:hover { color: var(--accentH); }
   </style>
 </head>
 <body>
@@ -282,6 +288,15 @@ $conn->close();
       <p>Sign in to access the employee system</p>
     </div>
 
+    <?php if ($success): ?>
+    <div class="alert-success" id="success-toast">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
+      <?= htmlspecialchars($success) ?>
+    </div>
+    <?php endif; ?>
+
     <?php if ($error): ?>
     <div class="alert-error">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -298,7 +313,7 @@ $conn->close();
       <div class="field">
         <label>Email</label>
         <div class="input-wrap">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg class="icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/>
             <polyline points="22,6 12,13 2,6"/>
           </svg>
@@ -310,7 +325,7 @@ $conn->close();
       <div class="field">
         <label>Password</label>
         <div class="input-wrap">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg class="icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
             <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
           </svg>
@@ -328,9 +343,8 @@ $conn->close();
     </form>
 
     <div class="divider">or</div>
-    <p class="signup-link">Don't have an account? <a href="create.php">Register here</a></p>
+    <p class="register-link">Don't have an account? <a href="register.php">Register here</a></p>
   </div>
-
 </div>
 
 <script>
@@ -339,17 +353,20 @@ function togglePw() {
   const ico = document.getElementById('eye-icon');
   if (pw.type === 'password') {
     pw.type = 'text';
-    ico.innerHTML = `
-      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
-      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
-      <line x1="1" y1="1" x2="23" y2="23"/>`;
+    ico.innerHTML = `<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>`;
   } else {
     pw.type = 'password';
-    ico.innerHTML = `
-      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-      <circle cx="12" cy="12" r="3"/>`;
+    ico.innerHTML = `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>`;
   }
 }
+
+// Auto-hide success toast
+const toast = document.getElementById('success-toast');
+if (toast) setTimeout(() => {
+  toast.style.transition = 'opacity .4s';
+  toast.style.opacity = '0';
+  setTimeout(() => toast.remove(), 400);
+}, 4000);
 </script>
 </body>
 </html>
