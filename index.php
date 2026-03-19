@@ -1,4 +1,11 @@
 <?php
+session_start();
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php");
+    exit;
+}
+$logged_in_name = $_SESSION['user_name'];
+
 include 'connect.php';
 
 $search = '';
@@ -25,6 +32,7 @@ $msg = match($success) {
     'created' => 'Employee created successfully!',
     'updated' => 'Employee updated successfully!',
     'deleted' => 'Employee deleted.',
+    'welcome' => 'Welcome back, ' . htmlspecialchars($logged_in_name) . '!',
     default   => ''
 };
 
@@ -402,12 +410,34 @@ $females = $total - $males;
     </div>
     <span class="logo-text">Employee<span>DB</span></span>
   </div>
-  <a class="btn-add" href="create.php">
+  <div style="display:flex;align-items:center;gap:1rem;">
+    <span style="color:var(--sub);font-size:.85rem;">
+      👋 <?= htmlspecialchars($logged_in_name) ?>
+    </span>
+    <a class="btn-add" href="create.php">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
       <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
     </svg>
     Add Employee
   </a>
+  <a href="logout.php" style="
+    display:inline-flex;align-items:center;gap:.4rem;
+    padding:.55rem 1rem;
+    background:rgba(255,107,107,.12);
+    border:1px solid rgba(255,107,107,.2);
+    border-radius:8px;
+    color:#ff6b6b;
+    font-size:.85rem;font-weight:600;
+    text-decoration:none;
+    transition:opacity .2s;">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+      <polyline points="16 17 21 12 16 7"/>
+      <line x1="21" y1="12" x2="9" y2="12"/>
+    </svg>
+    Logout
+  </a>
+  </div>
 </header>
 
 <div class="page">
@@ -523,7 +553,7 @@ $females = $total - $males;
 
 </div>
 
-
+<!-- Delete confirmation modal -->
 <div class="overlay" id="overlay">
   <div class="modal">
     <div class="modal-icon">
