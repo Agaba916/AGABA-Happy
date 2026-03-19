@@ -5,6 +5,7 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 $logged_in_name = $_SESSION['user_name'];
+$is_admin       = ($_SESSION['user_role'] ?? '') === 'admin';
 
 include 'connect.php';
 
@@ -115,6 +116,32 @@ $females = $total - $males;
     .logo-text { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; }
     .logo-text span { color: var(--accent); }
 
+    .topbar-right { display: flex; align-items: center; gap: .8rem; }
+
+    .user-badge {
+      display: flex; align-items: center; gap: .5rem;
+      background: var(--card);
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      padding: .4rem .9rem;
+      font-size: .83rem;
+      color: var(--sub);
+    }
+    .user-badge .role-tag {
+      background: rgba(108,99,255,.2);
+      color: var(--accent-h);
+      font-size: .7rem;
+      font-weight: 700;
+      padding: .1rem .5rem;
+      border-radius: 99px;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+    .role-tag-user {
+      background: rgba(0,212,170,.15) !important;
+      color: var(--teal) !important;
+    }
+
     .btn-add {
       display: inline-flex; align-items: center; gap: .45rem;
       background: var(--accent);
@@ -128,6 +155,19 @@ $females = $total - $males;
     }
     .btn-add:hover  { background: var(--accent-h); }
     .btn-add:active { transform: scale(.97); }
+
+    .btn-logout {
+      display: inline-flex; align-items: center; gap: .4rem;
+      padding: .55rem 1rem;
+      background: rgba(255,107,107,.12);
+      border: 1px solid rgba(255,107,107,.2);
+      border-radius: 8px;
+      color: var(--coral);
+      font-size: .85rem; font-weight: 600;
+      text-decoration: none;
+      transition: opacity .2s;
+    }
+    .btn-logout:hover { opacity: .75; }
 
     /* ── Page ── */
     .page {
@@ -291,7 +331,6 @@ $females = $total - $males;
     .td-name  { font-weight: 500; }
     .td-email { color: var(--sub); font-size: .875rem; }
 
-    /* Gender badge */
     .badge {
       display: inline-flex; align-items: center; gap: .35rem;
       padding: .25rem .75rem;
@@ -305,8 +344,7 @@ $females = $total - $males;
     .badge-female { background: rgba(255,107,107,.12); color: #ff9eb0; }
     .badge-female .badge-dot { background: #ff9eb0; }
 
-    /* Action buttons */
-    .actions { display: flex; gap: .5rem; }
+    .actions { display: flex; gap: .5rem; align-items: center; }
     .btn-edit, .btn-del {
       display: inline-flex; align-items: center; gap: .3rem;
       padding: .35rem .85rem;
@@ -327,7 +365,12 @@ $females = $total - $males;
     .btn-edit:hover, .btn-del:hover  { opacity: .75; }
     .btn-edit:active, .btn-del:active { transform: scale(.95); }
 
-    /* Empty state */
+    .no-access {
+      font-size: .78rem;
+      color: var(--dim);
+      font-style: italic;
+    }
+
     .empty-state { text-align: center; padding: 5rem 2rem; color: var(--dim); }
     .empty-state svg { margin-bottom: 1rem; opacity: .3; }
     .empty-state p { font-size: .9rem; }
@@ -362,11 +405,8 @@ $females = $total - $males;
       display: flex; align-items: center; justify-content: center;
       margin-bottom: 1.2rem;
     }
-    .modal h2 {
-      font-family: 'Syne', sans-serif;
-      font-size: 1.3rem; margin-bottom: .4rem;
-    }
-    .modal p { color: var(--sub); font-size: .875rem; line-height: 1.5; margin-bottom: 1.5rem; }
+    .modal h2 { font-family: 'Syne', sans-serif; font-size: 1.3rem; margin-bottom: .4rem; }
+    .modal p  { color: var(--sub); font-size: .875rem; line-height: 1.5; margin-bottom: 1.5rem; }
     .modal-btns { display: flex; gap: .7rem; }
     .btn-cancel {
       flex: 1; padding: .75rem;
@@ -374,7 +414,7 @@ $females = $total - $males;
       border: 1px solid var(--border2);
       border-radius: 8px; color: var(--sub);
       font-family: 'Inter', sans-serif; font-size: .9rem; cursor: pointer;
-      transition: color .2s, border-color .2s;
+      transition: color .2s;
     }
     .btn-cancel:hover { color: var(--text); }
     .btn-confirm {
@@ -393,6 +433,7 @@ $females = $total - $males;
       .stats  { grid-template-columns: 1fr; }
       .table-wrap { overflow-x: auto; }
       table   { min-width: 580px; }
+      .user-badge .role-tag { display: none; }
     }
   </style>
 </head>
@@ -410,33 +451,32 @@ $females = $total - $males;
     </div>
     <span class="logo-text">Employee<span>DB</span></span>
   </div>
-  <div style="display:flex;align-items:center;gap:1rem;">
-    <span style="color:var(--sub);font-size:.85rem;">
+
+  <div class="topbar-right">
+    <div class="user-badge">
       👋 <?= htmlspecialchars($logged_in_name) ?>
-    </span>
+      <span class="role-tag <?= $is_admin ? '' : 'role-tag-user' ?>">
+        <?= $is_admin ? 'Admin' : 'User' ?>
+      </span>
+    </div>
+
+    <?php if ($is_admin): ?>
     <a class="btn-add" href="create.php">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-      <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-    </svg>
-    Add Employee
-  </a>
-  <a href="logout.php" style="
-    display:inline-flex;align-items:center;gap:.4rem;
-    padding:.55rem 1rem;
-    background:rgba(255,107,107,.12);
-    border:1px solid rgba(255,107,107,.2);
-    border-radius:8px;
-    color:#ff6b6b;
-    font-size:.85rem;font-weight:600;
-    text-decoration:none;
-    transition:opacity .2s;">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-      <polyline points="16 17 21 12 16 7"/>
-      <line x1="21" y1="12" x2="9" y2="12"/>
-    </svg>
-    Logout
-  </a>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+      Add Employee
+    </a>
+    <?php endif; ?>
+
+    <a class="btn-logout" href="logout.php">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+        <polyline points="16 17 21 12 16 7"/>
+        <line x1="21" y1="12" x2="9" y2="12"/>
+      </svg>
+      Logout
+    </a>
   </div>
 </header>
 
@@ -444,7 +484,10 @@ $females = $total - $males;
 
   <div class="page-head">
     <h1>All <span>Employees</span></h1>
-    <p>Manage your workforce — <?= $total ?> record<?= $total !== 1 ? 's' : '' ?> in the system</p>
+    <p>
+      <?= $is_admin ? 'Admin view — full access' : 'View only — contact admin to make changes' ?>
+      &nbsp;·&nbsp; <?= $total ?> record<?= $total !== 1 ? 's' : '' ?>
+    </p>
   </div>
 
   <?php if ($msg): ?>
@@ -526,22 +569,26 @@ $females = $total - $males;
             </td>
             <td>
               <div class="actions">
-                <a class="btn-edit" href="edit.php?id=<?= $emp['id'] ?>">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/>
-                  </svg>
-                  Edit
-                </a>
-                <button class="btn-del"
-                  onclick="openDelete(<?= $emp['id'] ?>, '<?= htmlspecialchars($emp['firstname'].' '.$emp['lastname'], ENT_QUOTES) ?>')">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <polyline points="3 6 5 6 21 6"/>
-                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-                    <path d="M10 11v6M14 11v6M9 6V4h6v2"/>
-                  </svg>
-                  Delete
-                </button>
+                <?php if ($is_admin): ?>
+                  <a class="btn-edit" href="edit.php?id=<?= $emp['id'] ?>">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/>
+                    </svg>
+                    Edit
+                  </a>
+                  <button class="btn-del"
+                    onclick="openDelete(<?= $emp['id'] ?>, '<?= htmlspecialchars($emp['firstname'].' '.$emp['lastname'], ENT_QUOTES) ?>')">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <polyline points="3 6 5 6 21 6"/>
+                      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                      <path d="M10 11v6M14 11v6M9 6V4h6v2"/>
+                    </svg>
+                    Delete
+                  </button>
+                <?php else: ?>
+                  <span class="no-access">👁 View only</span>
+                <?php endif; ?>
               </div>
             </td>
           </tr>
@@ -553,7 +600,6 @@ $females = $total - $males;
 
 </div>
 
-<!-- Delete confirmation modal -->
 <div class="overlay" id="overlay">
   <div class="modal">
     <div class="modal-icon">
